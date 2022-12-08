@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.nttdata.bootcamp</groupId>
-	<artifactId>bootcamp-balance</artifactId>
+	<artifactId>balance</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>bootcamp-balance</name>
+	<name>balance</name>
 	<description>Microservicios</description>
 	<properties>
 		<java.version>11</java.version>
