@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: bootcamp-balance
+  config:
+    import: "optional:configserver:http://localhost:7000"
+  cloud:
+    config:
+      enabled: true
+      label: master
+      uri: http://localhost:7000
