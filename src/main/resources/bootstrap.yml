@@ -3,6 +3,7 @@ spring:
     name: balance
   config:
     import: "optional:configserver:http://localhost:7000"
+    #import: "optional:configserver:http://dknttdata-config-server:7000"
   cloud:
     config:
       enabled: true
