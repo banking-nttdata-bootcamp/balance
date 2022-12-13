@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import com.nttdata.bootcamp.service.BalanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.util.Date;
@@ -18,6 +19,7 @@ import javax.validation.Valid;
 public class BalanceController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BalanceController.class);
+	private static final String CIRCUIT_NAME="balance";
 	@Autowired
 	private BalanceService balanceService;
 
@@ -31,6 +33,7 @@ public class BalanceController {
 	}
 
 	//Balance by AccountNumber
+	@CircuitBreaker(name = CIRCUIT_NAME, fallbackMethod = "fallBackGetBalance")
 	@GetMapping("/findBalanceByAccount/{accountNumber}")
 	public Mono<Balance> findBalanceByAccount(@PathVariable("accountNumber") String accountNumber) {
 		Mono<Balance> balanceMono = balanceService.findByAccountNumber(accountNumber);
@@ -47,7 +50,6 @@ public class BalanceController {
 	}
 
 	//Save balance
-	@CircuitBreaker(name = "balance", fallbackMethod = "fallBackGetBalance")
 	@PostMapping(value = "/saveBalance")
 	public Mono<Balance> saveBalance(@RequestBody Balance dataBalance){
 		Mono.just(dataBalance).doOnNext(t -> {
@@ -63,12 +65,19 @@ public class BalanceController {
 	}
 
 	//Update balance
-	@CircuitBreaker(name = "balance", fallbackMethod = "fallBackGetBalance")
-	@PutMapping("/updateBalance/{numberAccount}/{mount}")
+	@PutMapping("/updateBalance/{numberAccount}/{mount}/{type}")
 	public Mono<Balance> updateBalance(@PathVariable("numberAccount") String numberAccount,
-									   @PathVariable("mount") Double mount) {
+									   @PathVariable("balance") Double balance,
+									   @PathVariable("mount") Double mount,
+									   @PathVariable("flagType") String flagType) {
 		Balance balanceMono= findBalanceByAccount(numberAccount).block();
-		balanceMono.setBalance(mount);
+		if (flagType.equals("Debit")){
+			balance=balance-mount;
+		}
+		if (flagType.equals("credit")){
+			balance=balance+mount;
+		}
+		balanceMono.setBalance(balance);
 		balanceMono.setModificationDate(new Date());
 		Mono<Balance> updateTransfer = balanceService.updateBalance(balanceMono);
 		return updateTransfer;
@@ -76,11 +85,12 @@ public class BalanceController {
 	}
 
 
-	private Mono<Balance> fallBackGetMovement(Exception e){
-		Balance balance = new Balance();
+	private Mono<Balance> fallBackGetBalance(@PathVariable("accountNumber") String accountNumber,Exception e){
+		Balance balance= new Balance();
 		balance.setBalance(-10.00);
-		Mono<Balance> movementsMono= Mono.just(balance);
-		return movementsMono;
+		return Mono.just(balance);
+		//return  Mono.<Balance>error(new Error("El cuenta bancaria " + accountNumber+ " no existe"));
+
 	}
 
 
