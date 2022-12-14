@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.controller;
 
 import com.nttdata.bootcamp.entity.Balance;
+import com.nttdata.bootcamp.entity.dto.BalanceDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,36 +52,54 @@ public class BalanceController {
 
 	//Save balance
 	@PostMapping(value = "/saveBalance")
-	public Mono<Balance> saveBalance(@RequestBody Balance dataBalance){
-		Mono.just(dataBalance).doOnNext(t -> {
-
+	public Mono<Balance> saveBalance(@RequestBody BalanceDto dataBalance){
+		Balance balance= new Balance();
+		Mono.just(balance).doOnNext(t -> {
+					t.setBalance(dataBalance.getBalance());
+					t.setDni(dataBalance.getDni());
+					t.setAccountNumber(dataBalance.getAccountNumber());
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 
-				}).onErrorReturn(dataBalance).onErrorResume(e -> Mono.just(dataBalance))
+				}).onErrorReturn(balance).onErrorResume(e -> Mono.just(balance))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
 
-		Mono<Balance> movementsMono = balanceService.saveBalance(dataBalance);
+		Mono<Balance> movementsMono = balanceService.saveBalance(balance);
+		return movementsMono;
+	}
+	@PostMapping(value = "/saveOpeningBalance")
+	public Mono<Balance> saveOpeningBalance(@RequestBody BalanceDto dataBalance){
+		Balance balance= new Balance();
+		Mono.just(balance).doOnNext(t -> {
+					t.setBalance(dataBalance.getBalance());
+					t.setDni(dataBalance.getDni());
+					t.setAccountNumber(dataBalance.getAccountNumber());
+					t.setBalance(dataBalance.getBalance());
+					t.setCreationDate(new Date());
+					t.setModificationDate(new Date());
+
+				}).onErrorReturn(balance).onErrorResume(e -> Mono.just(balance))
+				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+		Mono<Balance> movementsMono = balanceService.saveBalance(balance);
 		return movementsMono;
 	}
 
 	//Update balance
 	@PutMapping("/updateBalance/{numberAccount}/{mount}/{type}")
-	public Mono<Balance> updateBalance(@PathVariable("numberAccount") String numberAccount,
-									   @PathVariable("balance") Double balance,
-									   @PathVariable("mount") Double mount,
-									   @PathVariable("flagType") String flagType) {
-		Balance balanceMono= findBalanceByAccount(numberAccount).block();
-		if (flagType.equals("Debit")){
-			balance=balance-mount;
+	public Mono<Balance> updateBalance(@Valid @RequestBody BalanceDto dataBalance,@PathVariable("type") String type) {
+		Balance balanceMono= findBalanceByAccount(dataBalance.getAccountNumber()).block();
+		Double balance = balanceMono.getBalance();
+		if (type.equals("Debit")){
+			balance=balance- dataBalance.getBalance();
 		}
-		if (flagType.equals("credit")){
-			balance=balance+mount;
+		if (type.equals("credit")){
+			balance=balance+ dataBalance.getBalance();
 		}
 		balanceMono.setBalance(balance);
 		balanceMono.setModificationDate(new Date());
-		Mono<Balance> updateTransfer = balanceService.updateBalance(balanceMono);
-		return updateTransfer;
+		Mono<Balance> updateBalance = balanceService.updateBalance(balanceMono);
+		return updateBalance;
 
 	}
 
