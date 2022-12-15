@@ -42,15 +42,20 @@ public class BalanceServiceImpl implements BalanceService {
 
 
     @Override
-    public Mono<Balance> updateBalance(Balance dataBalance) {
+    public Mono<Balance> updateBalance(Balance dataBalance, String type) {
 
         Mono<Balance> transactionMono = findByAccountNumber(dataBalance.getAccountNumber());
-        try {
-            dataBalance.setDni(transactionMono.block().getDni());
-            dataBalance.setBalance(transactionMono.block().getBalance());
-            dataBalance.setAccountNumber(transactionMono.block().getAccountNumber());
-            dataBalance.setCreationDate(transactionMono.block().getCreationDate());
-            return balanceRepository.save(dataBalance);
+        Double bal= transactionMono.block().getBalance();
+        if(type.equals("DEBIT"))
+            bal=bal-dataBalance.getBalance();
+        if(type.equals("CREDIT"))
+            bal=bal+dataBalance.getBalance();
+
+        try{
+            Balance balance = transactionMono.block();
+            balance.setBalance(bal);
+            balance.setModificationDate(dataBalance.getModificationDate());
+            return balanceRepository.save(balance);
         }catch (Exception e){
             return Mono.<Balance>error(new Error("The balance of the account " + dataBalance.getAccountNumber() + " do not exists"));
         }

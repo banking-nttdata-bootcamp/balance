@@ -86,19 +86,37 @@ public class BalanceController {
 	}
 
 	//Update balance
-	@PutMapping("/updateBalance/{numberAccount}/{mount}/{type}")
-	public Mono<Balance> updateBalance(@Valid @RequestBody BalanceDto dataBalance,@PathVariable("type") String type) {
-		Balance balanceMono= findBalanceByAccount(dataBalance.getAccountNumber()).block();
-		Double balance = balanceMono.getBalance();
-		if (type.equals("Debit")){
-			balance=balance- dataBalance.getBalance();
-		}
-		if (type.equals("credit")){
-			balance=balance+ dataBalance.getBalance();
-		}
-		balanceMono.setBalance(balance);
-		balanceMono.setModificationDate(new Date());
-		Mono<Balance> updateBalance = balanceService.updateBalance(balanceMono);
+	@PutMapping("/updateBalanceCredit")
+	public Mono<Balance> updateBalanceCredit(@Valid @RequestBody BalanceDto dataBalance) {
+
+		Balance dataCurrentAccount = new Balance();
+		Double balance = dataBalance.getBalance();
+
+		Mono.just(dataCurrentAccount).doOnNext(t -> {
+					t.setAccountNumber(dataBalance.getAccountNumber());
+					t.setBalance(dataBalance.getBalance());
+					t.setModificationDate(new Date());
+				}).onErrorReturn(dataCurrentAccount).onErrorResume(e -> Mono.just(dataCurrentAccount))
+				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+		Mono<Balance> updateBalance = balanceService.updateBalance(dataCurrentAccount,"CREDIT");
+		return updateBalance;
+
+	}
+	@PutMapping("/updateBalanceDebit")
+	public Mono<Balance> updateBalanceDebit(@Valid @RequestBody BalanceDto dataBalance) {
+
+		Balance dataCurrentAccount = new Balance();
+		Double balance = dataBalance.getBalance();
+
+		Mono.just(dataCurrentAccount).doOnNext(t -> {
+					t.setAccountNumber(dataBalance.getAccountNumber());
+					t.setBalance(dataBalance.getBalance());
+					t.setModificationDate(new Date());
+				}).onErrorReturn(dataCurrentAccount).onErrorResume(e -> Mono.just(dataCurrentAccount))
+				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+		Mono<Balance> updateBalance = balanceService.updateBalance(dataCurrentAccount,"DEBIT");
 		return updateBalance;
 
 	}
