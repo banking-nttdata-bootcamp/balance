@@ -42,15 +42,11 @@ public class BalanceServiceImpl implements BalanceService {
 
 
     @Override
-    public Mono<Balance> updateBalance(Balance dataBalance, String type) {
+    public Mono<Balance> updateBalance(Balance dataBalance) {
 
         Mono<Balance> transactionMono = findByAccountNumber(dataBalance.getAccountNumber());
         Double bal= transactionMono.block().getBalance();
-        if(type.equals("DEBIT"))
-            bal=bal-dataBalance.getBalance();
-        if(type.equals("CREDIT"))
-            bal=bal+dataBalance.getBalance();
-
+        bal=bal+dataBalance.getBalance();
         try{
             Balance balance = transactionMono.block();
             balance.setBalance(bal);

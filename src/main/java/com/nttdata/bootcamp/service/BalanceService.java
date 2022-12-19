@@ -11,7 +11,7 @@ public interface BalanceService {
     public Mono<Balance> findByAccountNumber(String accountNumber);
     public Flux<Balance> findByBalanceByCustomer(String customer);
     public Mono<Balance> saveBalance(Balance balance);
-    public Mono<Balance> updateBalance(Balance balance,String type);
+    public Mono<Balance> updateBalance(Balance balance);
     public Mono<Void> deleteBalance(String accountNumber);
 
 

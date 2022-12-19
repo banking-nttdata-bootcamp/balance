@@ -25,7 +25,7 @@ public class ReportController {
         return Mono.just(balanceMono.block().getBalance());
     }
 
-        private Mono<Balance> fallBackGetBalance(String accountNumber, RuntimeException e){
+    private Mono<Balance> fallBackGetBalance(String accountNumber, RuntimeException e){
         Balance balance = new Balance();
         balance.setBalance(-10.00);
         Mono<Balance> movementsMono= Mono.just(balance);
