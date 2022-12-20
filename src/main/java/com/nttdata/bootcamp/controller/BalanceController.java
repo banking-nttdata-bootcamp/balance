@@ -26,29 +26,23 @@ public class BalanceController {
 
 
 	//Balance search
-	@GetMapping("/")
-	public Flux<Balance> finAllBalance() {
-		Flux<Balance> movementsFlux = balanceService.findAll();
+	@GetMapping("/findBalanceByAccount/{accountNumber}")
+	public Flux<Balance> finAllBalanceByAccount(@PathVariable("accountNumber") String accountNumber) {
+		Flux<Balance> movementsFlux = balanceService.findByAccountNumber(accountNumber);
 		LOGGER.info("Registered balance: " + movementsFlux);
 		return movementsFlux;
 	}
 
 	//Balance by AccountNumber
 	@CircuitBreaker(name = CIRCUIT_NAME, fallbackMethod = "fallBackGetBalance")
-	@GetMapping("/findBalanceByAccount/{accountNumber}")
+	@GetMapping("/findLastBalanceByAccount/{accountNumber}")
 	public Mono<Balance> findBalanceByAccount(@PathVariable("accountNumber") String accountNumber) {
-		Mono<Balance> balanceMono = balanceService.findByAccountNumber(accountNumber);
-		LOGGER.info("Registered balance of account number: "+accountNumber +"-" + balanceMono);
+		Mono<Balance> balanceMono = balanceService.findLastBalanceByAccountNumber(accountNumber);
+		LOGGER.info("Registered last balance of account number: "+accountNumber +"-" + balanceMono.block().getBalance());
 		return balanceMono;
 	}
 
 	//Balance by customer
-	@GetMapping("/findAllBalanceOfCustomer/{customer}")
-	public Flux<Balance> findAllBalanceOfCustomer(@PathVariable("customer") String customer) {
-		Flux<Balance> balanceFlux = balanceService.findByBalanceByCustomer(customer);
-		LOGGER.info("List balances of account by customer: "+customer +"-" + balanceFlux);
-		return balanceFlux;
-	}
 
 	//Save balance
 	@PostMapping(value = "/saveBalance")
@@ -69,24 +63,6 @@ public class BalanceController {
 	}
 
 	//Update balance
-	@PutMapping("/updateBalanceCredit")
-	public Mono<Balance> updateBalance(@Valid @RequestBody BalanceDto dataBalance) {
-
-		Balance dataCurrentAccount = new Balance();
-		Double balance = dataBalance.getBalance();
-
-		Mono.just(dataCurrentAccount).doOnNext(t -> {
-					t.setAccountNumber(dataBalance.getAccountNumber());
-					t.setBalance(dataBalance.getBalance());
-					t.setModificationDate(new Date());
-				}).onErrorReturn(dataCurrentAccount).onErrorResume(e -> Mono.just(dataCurrentAccount))
-				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
-
-		Mono<Balance> updateBalance = balanceService.updateBalance(dataCurrentAccount);
-		return updateBalance;
-
-	}
-
 
 	private Mono<Balance> fallBackGetBalance(@PathVariable("accountNumber") String accountNumber,Exception e){
 		Balance balance= new Balance();

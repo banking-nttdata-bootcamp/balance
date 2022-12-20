@@ -8,10 +8,9 @@ import reactor.core.publisher.Mono;
 public interface BalanceService {
 
     public Flux<Balance> findAll();
-    public Mono<Balance> findByAccountNumber(String accountNumber);
-    public Flux<Balance> findByBalanceByCustomer(String customer);
+    public Flux<Balance> findByAccountNumber(String accountNumber);
+    public Mono<Balance> findLastBalanceByAccountNumber(String accountNumber);
     public Mono<Balance> saveBalance(Balance balance);
-    public Mono<Balance> updateBalance(Balance balance);
     public Mono<Void> deleteBalance(String accountNumber);
 
 
